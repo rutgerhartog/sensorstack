@@ -1,0 +1,10 @@
+curl -sfL https://get.k3s.io | sh -s - \
+  --disable traefik \
+  --cluster-cidr {{ cluster_cidr }} \
+  --service-cidr {{ service_cidr }} \
+  --node-ip {{ hostvars[inventory_hostname]['ip']['wg'] }} \
+  --node-external-ip {{ hostvars[inventory_hostname]['ip']['wg'] }} \
+  --bind-address {{ hostvars[inventory_hostname]['ip']['wg'] }} \
+  --advertise-address {{ hostvars[inventory_hostname]['ip']['wg'] }} \
+  --private-registry /root/registries.yaml \
+  --cluster-dns {{ cluster_dns }}

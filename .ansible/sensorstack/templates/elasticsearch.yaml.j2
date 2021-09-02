@@ -1,0 +1,111 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: elasticsearch
+  namespace: blue
+data:
+  discovery.type: single-node
+  cluster.name: kube-logging
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: elasticsearch
+  namespace: blue
+  labels:
+    app: elk
+    tier: elasticsearch
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elk
+      tier: elasticsearch
+  template:
+    metadata:
+      labels:
+        app: elk
+        tier: elasticsearch
+    spec:
+      volumes:
+        - name: elasticsearch
+          hostPath:
+            path: /var/k8s/elasticsearch
+            type: DirectoryOrCreate
+      containers:
+        - name: elasticsearch
+          image: {{ images.elasticsearch.name }}:{{ images.elasticsearch.version }}
+          ports:
+            - name: http
+              containerPort: 9200
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: elasticsearch
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+              httpHeaders:
+              - name: User-Agent
+                value: livenessProbe (k8s)
+            failureThreshold: 1
+            periodSeconds: 15
+          startupProbe:
+            httpGet:
+              path: /
+              port: http
+              httpHeaders:
+              - name: User-Agent
+                value: startupProbe (k8s)
+            periodSeconds: 10
+          resources:
+            limits:
+              cpu: 800m
+              memory: 1Gi
+          volumeMounts:
+            - name: elasticsearch
+              mountPath: /usr/share/elasticsearch/data
+          imagePullPolicy: Always
+      restartPolicy: Always
+      securityContext: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch
+  labels:
+    app: elk
+    tier: elasticsearch
+spec:
+  ports:
+    - port: 9200
+      name: http
+  selector:
+    app: elk
+    tier: elasticsearch
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: elasticsearch
+  namespace: blue
+spec:
+  podSelector:
+    matchLabels:
+      app: elk
+      tier: elasticsearch
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: arkime
+    - podSelector:
+        matchLabels:
+          app: elk # Allows logstash and kibana
+    - podSelector:
+        matchLabels:
+          app: elk

@@ -1,0 +1,16 @@
+- hosts: sensor
+  remote_user: root
+  roles:
+    - role: k3s
+    - role: ca
+    - role: nginx
+    - role: sensorstack
+    - role: kali
+    - role: wireguard
+    - role: fw
+  vars:
+    uri: dcsc.local
+    ldap:
+      activate: true
+      base_dn: dn=dcsc,dc=local 
+    wireguard_port: 8128

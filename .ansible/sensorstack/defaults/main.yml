@@ -1,0 +1,10 @@
+---
+# defaults file for sensorstack
+
+images:
+  elasticsearch:
+    path: docker.elastic.co/elasticsearch/elasticsearch
+    version: 7.13.2
+  kibana:
+    path: docker.elastic.co/kibana/kibana
+    version: 7.13.2

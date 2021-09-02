@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: arkime
+  namespace: blue
+data:
+  ES_HOST: elasticsearch.blue
+  ES_PORT: 9200
+  MOLOCH_INTERFACE: eth0
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: arkime
+data:
+  MOLOCH_PASSWORD: "{{ arkime.password | b64encode }}"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: arkime
+  namespace: blue
+  labels:
+    app: arkime
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8005
+  selector:
+    app: arkime
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: arkime
+  namespace: blue
+  labels:
+    app: arkime
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: arkime
+  template:
+    containers:
+      - image: rutgerhartog/sensorstack:arkime
+        name: arkime
+        envFrom:
+          - configMapRef:
+              name: arkime
+          - secretRef:
+              name: arkime
+---
+apiVersion: v1
+kind: Ingress
+metadata:
+  name: arkime
+  namespace: blue
+spec:
+  tls:
+    - hosts:
+        - arkime
+      secretName: wiki-cert
+  rules:
+    - host: wiki.ee.nd
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: wiki
+                port:
+                  number: 80
