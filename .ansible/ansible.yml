@@ -9,8 +9,8 @@
     - role: wireguard
     - role: fw
   vars:
-    uri: dcsc.local
+    uri: sensor.local
     ldap:
       activate: true
-      base_dn: dn=dcsc,dc=local 
+      base_dn: dn=sensor,dc=local
     wireguard_port: 8128
